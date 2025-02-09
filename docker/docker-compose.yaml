@@ -1,0 +1,168 @@
+version: '3'
+  
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: ktech_zookeeper
+    ports:
+     - "2181:2181"
+    restart: unless-stopped
+    networks:
+      - bridge
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: ktech_kafka
+    ports:
+     - "9094:9094"
+    expose:
+     - "9093"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: "localhost"
+      KAFKA_ADVERTISED_PORT: "9092"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_CREATE_TOPICS: "operation_metric, raman_metric"
+      KAFKA_LOG_RETENTION_HOURS: 1
+      JMX_PORT: 9999
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname={{ansible_hostname}} -Djava.net.preferIPv4Stack=true -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.rmi.port=9999
+      KAFKA_LOG_RETENTION_BYTES: 4073741824
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_RETENTION_CHECK_INTERVAL_MS: 300000
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,OUTSIDE://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+    healthcheck:
+        test: nc -z kafka 9092 || exit -1
+        start_period: 15s
+        interval: 5s
+        timeout: 10s
+        retries: 10
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - bridge
+  spark-master:
+    image: docker.io/bitnami/spark:3.3
+    container_name: ktech_spark 
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+    ports:
+      - "8080:8080"  # Spark Web UI
+      - "7077:7077"
+      - "4050:4050"
+    depends_on:
+      - kafka  # Ensure Kafka is up before starting Spark
+    volumes:
+      - ../PySpark-Bio-Demo/:/app/ # Mount your Spark Streaming app
+    restart: unless-stopped
+    networks:
+      - bridge
+
+  spark-worker:
+    image: docker.io/bitnami/spark:3.3
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 1G
+      SPARK_WORKER_CORES: 1
+      SPARK_RPC_AUTHENTICATION_ENABLED: no
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      SPARK_USER: spark
+    ports:
+      - "8081:8081"
+    networks:
+      - bridge
+ 
+  spark-worker2:
+    image: docker.io/bitnami/spark:3.3
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 1G
+      SPARK_WORKER_CORES: 1
+      SPARK_RPC_AUTHENTICATION_ENABLED: no
+      SPARK_RPC_ENCRYPTION_ENABLED: no
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: no
+      SPARK_SSL_ENABLED: no
+      SPARK_USER: spark
+    ports:
+      - "8082:8082"
+    networks:
+      - bridge
+
+
+  postgresql:
+    image: postgres:latest
+    container_name: ktech_postgresql
+    environment:
+      POSTGRES_DB: bio
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./script/initdb.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - bridge
+  grafana:
+    image: grafana/grafana-oss:8.4.3
+    volumes:
+      - grafana-storage:/var/lib/grafana:rw
+      - ./provisioning:/etc/grafana/provisioning
+      - ./dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - postgresql
+    ports:
+      - 3000:3000
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+    networks:
+      - bridge
+
+  endpoint-operation:
+    image: endpoint-operation
+    container_name: endpoint-operation
+    build: ../ML_endpoint/ep_operation/
+    depends_on:
+      - spark-master
+    ports:
+     - "8000:8000"
+    volumes:
+      - ../ML_endpoint/ep_operation:/app
+    restart: always
+    networks:
+     - bridge
+
+  endpoint-raman:
+    image: endpoint-raman
+    container_name: endpoint-raman
+    build: ../ML_endpoint/ep_raman/
+    depends_on:
+      - spark-master
+    ports:
+     - "8001:8001"
+    volumes:
+      - ../ML_endpoint/ep_raman:/app
+    restart: always
+    networks:
+     - bridge
+volumes:
+  grafana-storage:
+
+networks:
+  bridge:
+
+
+
+

@@ -1,0 +1,7 @@
+#Start endpoint
+- VSCODE
+uvicorn main:app --reload
+- Terminal linux
+python -m uvicorn main:app --reload
+#test api
+curl -X POST "http://127.0.0.1:8000/predict" -H "Content-Type: application/json" -d '{"data": [[80, 253.0, 53, 296.0, 13.87591373591667, 73408.0, 5.142756158733616]]}'
