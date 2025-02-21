@@ -72,8 +72,5 @@ PySpark-Bio-Realtime-Operator-Metric/
 ## Contributing
 Contributions are welcome! Feel free to open issues or submit pull requests to improve the project.
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for more details.
-
 ## Contact
-For any questions or support, please reach out via [your contact/email here].
+For any questions or support, please reach out via thanhnguyen187201@gmail.com.
