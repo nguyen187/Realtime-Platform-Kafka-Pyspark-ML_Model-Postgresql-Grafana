@@ -1,5 +1,9 @@
 # PySpark-Bio-Realtime-Operator-Metric
+
+
 <img src="https://github.com/nguyen187/Realtime-Platform-Kafka-Pyspark-ML_Model-Postgresql-Grafana/blob/main/Architecture.png" width="600">
+
+
 ## Overview
 **PySpark-Bio-Realtime-Operator-Metric** is a real-time data processing system built using Apache Spark and PySpark, designed for handling large-scale bioinformatics streaming data. The system supports real-time metric computation and visualization for bio-related operations.
 
