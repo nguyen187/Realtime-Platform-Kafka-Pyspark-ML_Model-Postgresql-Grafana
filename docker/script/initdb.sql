@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS bio.operation_db;
 DROP TABLE IF EXISTS bio.raman_db;
-
+CREATE SCHEMA airflow;
 CREATE SCHEMA bio;
 CREATE TABLE bio.operation_db (
     Cust TEXT,
