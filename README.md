@@ -2,7 +2,7 @@
 
 
 <div style="text-align: center;">
-  <img src="https://github.com/nguyen187/Realtime-Platform-Kafka-Pyspark-ML_Model-Postgresql-Grafana/blob/main/Architecture.png" width="600">
+  <img src="https://github.com/nguyen187/Realtime-Platform-Kafka-Pyspark-ML_Model-Postgresql-Grafana/blob/main/Architecture.png" width="800">
 </div>
 
 ## Overview
